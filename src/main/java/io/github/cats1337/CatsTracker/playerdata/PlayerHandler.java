@@ -1,5 +1,5 @@
 package io.github.cats1337.CatsTracker.playerdata;
-
+// Credit https://github.com/bumpyJake
 import io.github.cats1337.CatsTracker.CatsTracker;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

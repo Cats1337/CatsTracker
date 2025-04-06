@@ -1,5 +1,5 @@
 package io.github.cats1337.CatsTracker.playerdata;
-
+// Credit https://github.com/bumpyJake
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Setter;
