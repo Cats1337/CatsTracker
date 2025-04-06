@@ -1,0 +1,25 @@
+# Settings
+settingsRan: false
+logMessages: true
+logDays: 7
+logSaveSeconds: 300
+excludedTabs:
+  - vanillatweaks
+  - custom_nether_portals
+
+# Point tracking toggle
+trackPoints:
+  adv: true
+  fish: true
+  mob: true
+
+# Placeholders
+placeholders:
+  - "adv"
+  - "fish"
+  - "mob"
+
+# Points to award
+challenge: 45
+goal: 25
+task: 10

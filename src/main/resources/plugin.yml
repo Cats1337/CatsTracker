@@ -1,0 +1,9 @@
+name: CatsTracker
+version: '${project.version}'
+main: io.github.cats1337.CatsTracker.CatsTracker
+api-version: '1.21'
+authors:
+  - Cats1337
+description: CatsTracker tracks points for stuff
+depend: [PlaceholderAPI] #required for placeholders in holograms
+softdepend: [DecentHolograms] #optional, but recommended to display points holograms
