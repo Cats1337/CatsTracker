@@ -11,7 +11,6 @@ import com.marcusslover.plus.lib.text.Text;
 import io.github.cats1337.CatsTracker.utils.PointLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 

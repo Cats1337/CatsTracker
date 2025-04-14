@@ -137,7 +137,11 @@ public final class CatsTracker extends JavaPlugin {
 
     private void checkAndResetConfig() {
         if (!getDataFolder().exists()) {
-            getDataFolder().mkdirs();  // Create plugin's folder if it doesn't exist
+            if(getDataFolder().mkdirs()){  // Create plugin's folder if it doesn't exist
+                Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aPlugin folder created.");
+            } else {
+                Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cFailed to create plugin folder.");
+            }
         }
 
         File configFile = new File(getDataFolder(), "config.yml");

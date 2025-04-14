@@ -26,9 +26,7 @@ public class PointsManager {
         int points = getPoints(serverPlayer, category);
         int newAmount = points + amount;
         setPoints(serverPlayer, category, newAmount);
-        Bukkit.getScheduler().runTaskAsynchronously(CatsTracker.getInstance(), () -> {
-            playerContainer.writeData(p.getUniqueId(), serverPlayer);
-        });
+        Bukkit.getScheduler().runTaskAsynchronously(CatsTracker.getInstance(), () -> playerContainer.writeData(p.getUniqueId(), serverPlayer));
 
         String player = p.getName();
         String entry = player + ": +" + amount + "pts - [" + typeName + "]";
@@ -57,9 +55,7 @@ public class PointsManager {
         ServerPlayer serverPlayer = playerContainer.loadData(p.getUniqueId());
 
         setPoints(serverPlayer, category, amount);
-        Bukkit.getScheduler().runTaskAsynchronously(CatsTracker.getInstance(), () -> {
-            playerContainer.writeData(p.getUniqueId(), serverPlayer);
-        });
+        Bukkit.getScheduler().runTaskAsynchronously(CatsTracker.getInstance(), () -> playerContainer.writeData(p.getUniqueId(), serverPlayer));
     }
 
     private void setPoints(ServerPlayer serverPlayer, String category, int points) {
