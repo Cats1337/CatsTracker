@@ -35,6 +35,23 @@ public class PointsManager {
         pointLogger.addEntry(entry);
     }
 
+    public int getPoints(Player p, String category) {
+        PlayerContainer playerContainer = PlayerHandler.getInstance().getContainer();
+        ServerPlayer serverPlayer = playerContainer.loadData(p.getUniqueId());
+
+        return getPoints(serverPlayer, category);
+    }
+
+    private int getPoints(ServerPlayer serverPlayer, String category) {
+        return switch (category.toLowerCase()) {
+            case "adv" -> serverPlayer.getAdvPoints();
+            case "fish" -> serverPlayer.getFishPoints();
+            case "mob" -> serverPlayer.getMobPoints();
+            case "purge" -> serverPlayer.getPurgePoints();
+            default -> throw new IllegalArgumentException("Unknown category: " + category);
+        };
+    }
+
     public void setPoints(Player p, String category, int amount) {
         PlayerContainer playerContainer = PlayerHandler.getInstance().getContainer();
         ServerPlayer serverPlayer = playerContainer.loadData(p.getUniqueId());
@@ -45,11 +62,24 @@ public class PointsManager {
         });
     }
 
-    public int getPoints(Player p, String category) {
-        PlayerContainer playerContainer = PlayerHandler.getInstance().getContainer();
-        ServerPlayer serverPlayer = playerContainer.loadData(p.getUniqueId());
-
-        return getPoints(serverPlayer, category);
+    private void setPoints(ServerPlayer serverPlayer, String category, int points) {
+        switch (category.toLowerCase()) {
+            case "adv":
+                serverPlayer.setAdvPoints(points);
+                break;
+            case "fish":
+                serverPlayer.setFishPoints(points);
+                break;
+            case "mob":
+                serverPlayer.setMobPoints(points);
+                break;
+            case "purge":
+                serverPlayer.setPurgePoints(points);
+                break;
+            default:
+                serverPlayer.setAdvPoints(points);
+                break;
+        }
     }
 
     public List<Map.Entry<String, Integer>> getAllSortedScores(String category) {
@@ -67,31 +97,6 @@ public class PointsManager {
         sortedScores.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
 
         return sortedScores;
-    }
-
-    private int getPoints(ServerPlayer serverPlayer, String category) {
-        return switch (category.toLowerCase()) {
-            case "adv" -> serverPlayer.getAdvPoints();
-            case "fish" -> serverPlayer.getFishPoints();
-            case "mob" -> serverPlayer.getMobPoints();
-            default -> throw new IllegalArgumentException("Unknown category: " + category);
-        };
-    }
-
-    private void setPoints(ServerPlayer serverPlayer, String category, int points) {
-        switch (category.toLowerCase()) {
-            case "adv":
-                serverPlayer.setAdvPoints(points);
-                break;
-            case "fish":
-                serverPlayer.setFishPoints(points);
-                break;
-            case "mob":
-                serverPlayer.setMobPoints(points);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown category: " + category);
-        }
     }
 
 }

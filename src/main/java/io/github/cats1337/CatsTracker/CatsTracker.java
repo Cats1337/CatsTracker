@@ -3,14 +3,12 @@ package io.github.cats1337.CatsTracker;
 import io.github.cats1337.CatsTracker.Events.AdvancementListener;
 import io.github.cats1337.CatsTracker.Events.FishListener;
 import io.github.cats1337.CatsTracker.Events.MobListener;
+import io.github.cats1337.CatsTracker.Events.PlayerListener;
 import io.github.cats1337.CatsTracker.commands.PointsCommand;
 import io.github.cats1337.CatsTracker.commands.SizeCommand;
 import io.github.cats1337.CatsTracker.commands.UtilCommands;
 import io.github.cats1337.CatsTracker.playerdata.PlayerContainer;
-import io.github.cats1337.CatsTracker.utils.PlaceholdersAdv;
-import io.github.cats1337.CatsTracker.utils.PlaceholdersFish;
-import io.github.cats1337.CatsTracker.utils.PlaceholdersMob;
-import io.github.cats1337.CatsTracker.utils.PointLogger;
+import io.github.cats1337.CatsTracker.utils.*;
 import io.github.cats1337.CatsTracker.playerdata.PlayerHandler;
 import com.marcusslover.plus.lib.command.CommandManager;
 import com.marcusslover.plus.lib.container.ContainerManager;
@@ -28,6 +26,7 @@ public final class CatsTracker extends JavaPlugin {
     private PlaceholdersFish fishPlaceholder;
     private PlaceholdersAdv advPlaceholder;
     private PlaceholdersMob mobPlaceholder;
+    private PlaceholdersPurge purgePlaceholder;
     private PointLogger pointLogger;
 
     public static CatsTracker getInstance() {
@@ -65,11 +64,13 @@ public final class CatsTracker extends JavaPlugin {
         pm.registerEvents(new AdvancementListener(), this);
         pm.registerEvents(new FishListener(), this);
         pm.registerEvents(new MobListener(),this);
+        pm.registerEvents(new PlayerListener(), this);
         Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aEvents registered");
 
         fishPlaceholder = new PlaceholdersFish();
         advPlaceholder = new PlaceholdersAdv();
         mobPlaceholder = new PlaceholdersMob();
+        purgePlaceholder = new PlaceholdersPurge();
         // Register placeholders for PlaceholderAPI
         if (pm.isPluginEnabled("PlaceholderAPI")) {
             if (!fishPlaceholder.isRegistered()) {
@@ -80,6 +81,9 @@ public final class CatsTracker extends JavaPlugin {
             }
             if (!mobPlaceholder.isRegistered()) {
                 mobPlaceholder.register();
+            }
+            if (!purgePlaceholder.isRegistered()) {
+                purgePlaceholder.register();
             }
             Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aPlaceholders registered");
         }
@@ -102,9 +106,10 @@ public final class CatsTracker extends JavaPlugin {
     @Override
     public void onDisable() {
         cmdManager.clearCommands();
-//        advPlaceholder.unregister();
-//        fishPlaceholder.unregister();
-//        mobPlaceholder.unregister();
+        advPlaceholder.unregister();
+        fishPlaceholder.unregister();
+        mobPlaceholder.unregister();
+        purgePlaceholder.unregister();
         this.pointLogger.writeEntries();
 
         // set fileLoggerRunning to false, so it can be restarted

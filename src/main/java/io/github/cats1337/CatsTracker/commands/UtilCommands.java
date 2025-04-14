@@ -8,7 +8,6 @@ import com.marcusslover.plus.lib.command.TabCompleteContext;
 import com.marcusslover.plus.lib.text.Text;
 import io.github.cats1337.CatsTracker.utils.ITabCompleterHelper;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -16,12 +15,13 @@ import java.util.List;
 
 @Command(name = "ctracker", aliases = {"ctrack", "ctr", "ct"})
 public class UtilCommands implements ICommand {
-    FileConfiguration config = CatsTracker.getInstance().getConfig();
     private final String cmdName = "ctracker";
     private final List<String> subCommands = List.of("help", "log", "toggle", "reload");
-    private final List<String> categories = config.getStringList("placeholders");
+    private final List<String> categories;
 
-    // get placeholders from config
+    public UtilCommands() {
+        this.categories = CatsTracker.getInstance().getConfig().getStringList("placeholders");
+    }
 
     @Override
     public boolean execute(@NotNull CommandContext cmd) {

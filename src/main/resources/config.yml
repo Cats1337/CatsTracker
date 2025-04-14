@@ -12,14 +12,19 @@ trackPoints:
   adv: true
   fish: true
   mob: true
+  purge: false
 
 # Placeholders
 placeholders:
   - "adv"
   - "fish"
   - "mob"
+  - "purge"
 
 # Points to award
 challenge: 45
 goal: 25
 task: 10
+
+purgeCooldown: 30 # in minutes
+respawnCooldown: 15 # in minutes

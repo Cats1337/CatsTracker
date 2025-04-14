@@ -21,14 +21,14 @@ import java.util.Map;
 
 @Command(name = "points", aliases = {"point"}, description = "Tracked points for things.")
 public class PointsCommand implements ICommand {
-    FileConfiguration config = CatsTracker.getInstance().getConfig();
     private final String cmdName = "points";
     private final List<String> subCommands = List.of("set", "reset", "add", "remove", "lb");
-    private final List<String> categories = config.getStringList("placeholders");
     private final PointLogger pointLogger;
+    private final List<String> categories;
 
     public PointsCommand() {
         this.pointLogger = PointLogger.getInstance();
+        this.categories = CatsTracker.getInstance().getConfig().getStringList("placeholders");
     }
 
     private String getCategory(String arg) {

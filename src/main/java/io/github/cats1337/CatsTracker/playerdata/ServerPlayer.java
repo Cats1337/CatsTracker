@@ -20,6 +20,7 @@ public class ServerPlayer {
     private int advPoints;
     private int fishPoints;
     private int mobPoints;
+    private int purgePoints;
 
     public @Nullable Player getPlayer() { // Unused? Delete?
         return Bukkit.getPlayer(uuid);
