@@ -28,3 +28,8 @@ task: 10
 
 purgeCooldown: 30 # in minutes
 respawnCooldown: 15 # in minutes
+notify: true
+
+daySpeed: 1.0 # Speed of the day (1.0 is normal speed)
+nightSpeed: 1.0
+disableTimeWarp: true

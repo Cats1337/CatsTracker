@@ -24,10 +24,14 @@ public class PointsCommand implements ICommand {
     private final List<String> subCommands = List.of("set", "reset", "add", "remove", "lb");
     private final PointLogger pointLogger;
     private final List<String> categories;
+    private final List<String> subCmdsAndCategories = new ArrayList<>();
+                
 
     public PointsCommand() {
         this.pointLogger = PointLogger.getInstance();
         this.categories = CatsTracker.getInstance().getConfig().getStringList("placeholders");
+        this.subCmdsAndCategories.addAll(subCommands);
+        this.subCmdsAndCategories.addAll(categories);
     }
 
     private String getCategory(String arg) {
@@ -37,15 +41,36 @@ public class PointsCommand implements ICommand {
         }
     }
 
-
     private void sendPointsUpdate(Player p, int amount, String action, String category) {
-        Text.of("&eYour &b" + getCategory(category) + "&e points have been " + action + " to &a" + amount).send(p);
+        Text.of("&eYour &b" + getCategory(category) + "&e points have been updated to &a" + PointsManager.getPoints(p, category) + "&e. &7[" + action + "]").send(p);
+
     }
 
     private void handlePointsModification(CommandSender sender, Player p, int amount, String action, String category) {
         if (sender.hasPermission("ctracker.admin")) {
-            PointsManager.getInstance().addPoints(p, amount, action, category);
-            Text.of("&eSet &a" + p.getName() + "&e's &b" + getCategory(category) + "&e points to &a" + amount + " &7[" + action + "]").send(sender);
+            int oldAmount = PointsManager.getPoints(p, category);
+            String amtType = switch (action) {
+                case "add" -> "&a+" + amount;
+                case "remove" -> "&c-" + amount;
+                case "set" -> "&6" + amount;
+                default -> "&7" + amount;
+            };
+
+            if (action.equals("add")){
+                PointsManager.addPoints(p, amount, action, category);
+            }
+            if (action.equals("remove")){
+                PointsManager.removePoints(p, amount, action, category);
+            }
+            if (action.equals("set")){
+                PointsManager.setPoints(p, category, amount);
+            }
+            if (action.equals("reset")){
+                PointsManager.setPoints(p, category, 0);
+            }
+
+            Text.of("&eChanged &a" + p.getName() + "&e's &b" + getCategory(category) + "&e points from &a" + oldAmount + "&e 🠚 " + " &7[" + amtType + "]").send(sender);
+
             sendPointsUpdate(p, amount, action, category);
         }
     }
@@ -76,7 +101,7 @@ public class PointsCommand implements ICommand {
                 }
 
                 // Get the points for the given category
-                int points = PointsManager.getInstance().getPoints(p, category);
+                int points = PointsManager.getPoints(p, category);
                 Text.of("&eYou have &a" + points + " &b" + getCategory(category) + "&e points.").send(p);
                 return true;
             }
@@ -96,7 +121,7 @@ public class PointsCommand implements ICommand {
                         return true;
                     }
                 }
-                List<Map.Entry<String, Integer>> sortedEntries = new ArrayList<>(PointsManager.getInstance().getAllSortedScores(category));
+                List<Map.Entry<String, Integer>> sortedEntries = new ArrayList<>(PointsManager.getAllSortedScores(category));
                 int startIndex = (page - 1) * 10;
                 int endIndex = Math.min(startIndex + 10, sortedEntries.size());
 
@@ -126,39 +151,30 @@ public class PointsCommand implements ICommand {
                     }
                 }
 
-                switch (arg) {
-                    case "set" -> {
-                        if (args.length != 4) {
-                            Text.of("&c/points set <name> <category> <amount>").send(sender);
-                            return true;
-                        }
-                        String category = args[2];
-                        int amount;
-                        try {
-                            amount = Integer.parseInt(args[3]);
-                        } catch (NumberFormatException e) {
-                            Text.of("&cAmount must be a number.").send(sender);
-                            return true;
-                        }
-                        PointsManager.getInstance().setPoints(p, category, amount);
-                        Text.of("&eSet &a" + p.getName() + "&e's &b" + getCategory(category) + "&e points to &a" + amount).send(sender);
-                        Text.of("&eYour &b" + getCategory(category) + "&e points have been set to &a" + amount).send(p);
-                        pointLogger.addEntry(p.getName() + ": Set | " + getCategory(category) + " pts to " + amount + " by " + sender.getName());
+                if (args.length == 2) {
+                    String category = arg.toLowerCase();
+                    if (!categories.contains(category)) {
+                        Text.of("&cUnknown or invalid category: " + category + ". Please check the available categories.").send(sender);
+                        return true;
                     }
+                    int points = PointsManager.getPoints(p, category);
+                    Text.of("&e" + p.getName() + " has &a" + points + " &b" + getCategory(category) + "&e points.").send(sender);
+                    return true;
+                }
 
+                switch (arg) {
                     case "reset" -> {
                         if (args.length != 3) {
                             Text.of("&c/points reset <name> <category>").send(sender);
                             return true;
                         }
                         String category = args[2];
-                        PointsManager.getInstance().setPoints(p, category, 0);
-                        Text.of("&eSet &a" + p.getName() + "&e's points to &a0").send(sender);
-                        Text.of("&eYour points have been set to &a0").send(p);
+                        PointsManager.setPoints(p, category, 0);
+                        handlePointsModification(sender, p, 0, arg, category);
                         pointLogger.addEntry(p.getName() + ": Reset | " + getCategory(category) + " pts by " + sender.getName());
                     }
 
-                    case "add", "remove" -> {
+                    case "add", "remove", "set" -> {
                         if (args.length != 4) {
                             Text.of("&c/points " + arg + " <name> <category> <amount>").send(sender);
                             return true;
@@ -171,9 +187,7 @@ public class PointsCommand implements ICommand {
                             Text.of("&cAmount must be a number.").send(sender);
                             return true;
                         }
-                        int currentPoints = PointsManager.getInstance().getPoints(p, category);
-                        int newPoints = arg.equals("add") ? currentPoints + amount : currentPoints - amount;
-                        handlePointsModification(sender, p, newPoints, arg.equals("add") ? "added" : "removed", category);
+                        handlePointsModification(sender, p, amount, arg, category);
                     }
 
                     default -> {
@@ -198,16 +212,15 @@ public class PointsCommand implements ICommand {
 
         // If the sender is a player and it's the first argument (category), complete from available categories
         if (args.length == 1) {
-            return ITabCompleterHelper.tabComplete(args[0], categories);
+            if(sender.hasPermission("ctracker.admin")){
+                return ITabCompleterHelper.tabComplete(args[0], subCmdsAndCategories);
+            } else {
+                return ITabCompleterHelper.tabComplete(args[0], categories);
+            }
         }
 
         // Admin commands (set, add, remove, reset)
         if (sender.hasPermission("ctracker.admin")) {
-            if (args.length == 1) {
-                // Complete admin subcommands (set, add, remove, reset)
-                return ITabCompleterHelper.tabComplete(args[0], subCommands);
-            }
-
             // Completing player names for set, add, remove, reset (second argument)
             if (args.length == 2 && (args[0].equals("set") || args[0].equals("add") || args[0].equals("remove") || args[0].equals("reset"))) {
                 return ITabCompleterHelper.tabComplete(args[1], Bukkit.getOnlinePlayers().stream().map(Player::getName).toList());

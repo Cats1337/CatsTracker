@@ -22,7 +22,7 @@ public class ServerPlayer {
     private int mobPoints;
     private int purgePoints;
 
-    public @Nullable Player getPlayer() { // Unused? Delete?
+    public @Nullable Player getPlayer() {
         return Bukkit.getPlayer(uuid);
     }
 

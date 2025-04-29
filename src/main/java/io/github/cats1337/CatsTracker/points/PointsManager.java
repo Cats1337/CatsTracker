@@ -15,32 +15,17 @@ public class PointsManager {
     @Getter
     private static final PointsManager instance = new PointsManager();
 
-    private final PointLogger pointLogger;
-    private PointsManager() {this.pointLogger = PointLogger.getInstance();}
+    private static PointLogger pointLogger = new PointLogger();
+    private PointsManager() {pointLogger = PointLogger.getInstance();}
 
-
-    public void addPoints(Player p, int amount, String typeName, String category) {
-        PlayerContainer playerContainer = PlayerHandler.getInstance().getContainer();
-        ServerPlayer serverPlayer = playerContainer.loadData(p.getUniqueId());
-
-        int points = getPoints(serverPlayer, category);
-        int newAmount = points + amount;
-        setPoints(serverPlayer, category, newAmount);
-        Bukkit.getScheduler().runTaskAsynchronously(CatsTracker.getInstance(), () -> playerContainer.writeData(p.getUniqueId(), serverPlayer));
-
-        String player = p.getName();
-        String entry = player + ": +" + amount + "pts - [" + typeName + "]";
-        pointLogger.addEntry(entry);
-    }
-
-    public int getPoints(Player p, String category) {
+    public static int getPoints(Player p, String category) {
         PlayerContainer playerContainer = PlayerHandler.getInstance().getContainer();
         ServerPlayer serverPlayer = playerContainer.loadData(p.getUniqueId());
 
         return getPoints(serverPlayer, category);
     }
 
-    private int getPoints(ServerPlayer serverPlayer, String category) {
+    private static int getPoints(ServerPlayer serverPlayer, String category) {
         return switch (category.toLowerCase()) {
             case "adv" -> serverPlayer.getAdvPoints();
             case "fish" -> serverPlayer.getFishPoints();
@@ -50,7 +35,32 @@ public class PointsManager {
         };
     }
 
-    public void setPoints(Player p, String category, int amount) {
+    public static void addPoints(Player p, int amount, String typeName, String category) {
+        modifyPoints(p, amount, category);
+
+        String player = p.getName();
+        String entry = player + ": +" + amount + "pts - [" + typeName + "]";
+        pointLogger.addEntry(entry);
+    }
+
+    public static void removePoints(Player p, int amount, String typeName, String category) {
+        modifyPoints(p, -amount, category);
+
+        String player = p.getName();
+        String entry = player + ": -" + amount + "pts - [" + typeName + "]";
+        pointLogger.addEntry(entry);
+    }
+
+    public static void modifyPoints(Player p, int amount, String category) {
+        PlayerContainer playerContainer = PlayerHandler.getInstance().getContainer();
+        ServerPlayer serverPlayer = playerContainer.loadData(p.getUniqueId());
+
+        int points = getPoints(serverPlayer, category);
+        int newAmount = (points + amount);
+        setPoints(serverPlayer, category, newAmount);
+    }
+
+    public static void setPoints(Player p, String category, int amount) {
         PlayerContainer playerContainer = PlayerHandler.getInstance().getContainer();
         ServerPlayer serverPlayer = playerContainer.loadData(p.getUniqueId());
 
@@ -58,7 +68,7 @@ public class PointsManager {
         Bukkit.getScheduler().runTaskAsynchronously(CatsTracker.getInstance(), () -> playerContainer.writeData(p.getUniqueId(), serverPlayer));
     }
 
-    private void setPoints(ServerPlayer serverPlayer, String category, int points) {
+    private static void setPoints(ServerPlayer serverPlayer, String category, int points) {
         switch (category.toLowerCase()) {
             case "adv":
                 serverPlayer.setAdvPoints(points);
@@ -78,7 +88,7 @@ public class PointsManager {
         }
     }
 
-    public List<Map.Entry<String, Integer>> getAllSortedScores(String category) {
+    public static List<Map.Entry<String, Integer>> getAllSortedScores(String category) {
         PlayerContainer playerContainer = PlayerHandler.getInstance().getContainer();
 
         Map<String, Integer> playerScores = new HashMap<>();

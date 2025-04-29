@@ -1,5 +1,5 @@
 package io.github.cats1337.CatsTracker.playerdata;
-// Credit https://github.com/bumpyJake
+// Credit https://github.com/bumpyJake for the original code, which has been modified
 import io.github.cats1337.CatsTracker.CatsTracker;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -9,6 +9,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -20,23 +21,25 @@ public class PlayerHandler implements Listener {
         instance = this;
     }
 
-    public static PlayerHandler getInstance() {
-        return Objects.requireNonNullElseGet(instance, PlayerHandler::new);
-    }
-
     public @NotNull Collection<ServerPlayer> getGamePlayers() {
-        return getContainer().getValues();
+        PlayerContainer container = getContainer();
+        return container != null ? container.getValues() : List.of();
     }
 
     public PlayerContainer getContainer() {
-        if (!CatsTracker.getInstance().getContainerManager().getByType(PlayerContainer.class).isPresent()){
+        if (CatsTracker.getInstance() == null || CatsTracker.getInstance().getContainerManager() == null)
             return null;
-        }
-        return CatsTracker.getInstance().getContainerManager().getByType(PlayerContainer.class).get();
+
+        return CatsTracker.getInstance().getContainerManager()
+                .getByType(PlayerContainer.class)
+                .orElse(null);
     }
 
     @EventHandler
     public void onLogin(PlayerLoginEvent e) {
+        PlayerContainer container = getContainer();
+        if (container == null) return;
+
         Player p = e.getPlayer();
         UUID uuid = p.getUniqueId();
         ServerPlayer serverPlayer = getContainer().loadData(uuid);
@@ -50,9 +53,14 @@ public class PlayerHandler implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
+        PlayerContainer container = getContainer();
+        if (container == null) return;
+
         Player p = e.getPlayer();
         UUID uuid = p.getUniqueId();
         ServerPlayer serverPlayer = getContainer().loadData(uuid);
         getContainer().writeData(uuid, serverPlayer);
     }
+
+    public static PlayerHandler getInstance() {return Objects.requireNonNullElseGet(instance, PlayerHandler::new);}
 }

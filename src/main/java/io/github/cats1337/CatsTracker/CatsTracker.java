@@ -6,6 +6,7 @@ import io.github.cats1337.CatsTracker.Events.MobListener;
 import io.github.cats1337.CatsTracker.Events.PlayerListener;
 import io.github.cats1337.CatsTracker.commands.PointsCommand;
 import io.github.cats1337.CatsTracker.commands.SizeCommand;
+import io.github.cats1337.CatsTracker.commands.TimeWarpCommand;
 import io.github.cats1337.CatsTracker.commands.UtilCommands;
 import io.github.cats1337.CatsTracker.playerdata.PlayerContainer;
 import io.github.cats1337.CatsTracker.utils.*;
@@ -23,18 +24,13 @@ public final class CatsTracker extends JavaPlugin {
     public static Logger log;
     private CommandManager cmdManager;
     private ContainerManager containerManager;
-    private PlaceholdersFish fishPlaceholder;
-    private PlaceholdersAdv advPlaceholder;
-    private PlaceholdersMob mobPlaceholder;
-    private PlaceholdersPurge purgePlaceholder;
+    private Placeholders placeholders;
     private PointLogger pointLogger;
-
-    public static CatsTracker getInstance() {
-        return CatsTracker.getPlugin(CatsTracker.class);
-    }
+    private static CatsTracker instance;
 
     @Override
     public void onEnable() {
+        instance = this;
         checkAndResetConfig();
 
         executeSettings();
@@ -46,10 +42,11 @@ public final class CatsTracker extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aPointLogger initialized");
 
         // Register commands
-        cmdManager = CommandManager.get(this);
+        cmdManager = new CommandManager(this);
         cmdManager.register(new PointsCommand());
         cmdManager.register(new UtilCommands());
         cmdManager.register(new SizeCommand());
+        cmdManager.register(new TimeWarpCommand());
         Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aCommands registered");
 
         // Register containers for player data
@@ -58,58 +55,41 @@ public final class CatsTracker extends JavaPlugin {
         containerManager.init(this);
         Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aContainers registered");
 
-        // Register events for player and fishing actions
+        // Register events
         PluginManager pm = Bukkit.getPluginManager();
         pm.registerEvents(new PlayerHandler(), this);
         pm.registerEvents(new AdvancementListener(), this);
         pm.registerEvents(new FishListener(), this);
-        pm.registerEvents(new MobListener(),this);
+        pm.registerEvents(new MobListener(), this);
         pm.registerEvents(new PlayerListener(), this);
         Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aEvents registered");
 
-        fishPlaceholder = new PlaceholdersFish();
-        advPlaceholder = new PlaceholdersAdv();
-        mobPlaceholder = new PlaceholdersMob();
-        purgePlaceholder = new PlaceholdersPurge();
-        // Register placeholders for PlaceholderAPI
+        // Initialize and register placeholders
+        placeholders = new Placeholders();
         if (pm.isPluginEnabled("PlaceholderAPI")) {
-            if (!fishPlaceholder.isRegistered()) {
-                fishPlaceholder.register();
+            if (placeholders.register()) {
+                Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aRegistering Placeholders:");
+                for (String key : placeholders.getValidCategories()) {
+                    Bukkit.getConsoleSender().sendMessage(" §8- §7" + key);
+                }
+                Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aPlaceholders registered");
+            } else {
+                Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cFailed to register placeholders with PlaceholderAPI");
             }
-            if (!advPlaceholder.isRegistered()) {
-                advPlaceholder.register();
-            }
-            if (!mobPlaceholder.isRegistered()) {
-                mobPlaceholder.register();
-            }
-            if (!purgePlaceholder.isRegistered()) {
-                purgePlaceholder.register();
-            }
-            Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aPlaceholders registered");
+        } else {
+            Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cPlaceholderAPI not found, placeholders will not work");
         }
-        else {
-            Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cPlaceholderAPI not found, placeholders not registered");
-        }
+
 
         Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aCatsTracker enabled");
     }
 
-//    Adding a new thing:
-//    Add placeholder to config
-//    Add switch case to getPoints/setPoints in PointsManager
-
-//    Register placeholder & event
-//    pm.registerEvents(new BLANKListener(),this);
-//    placeholderBLANK = new PlaceholderBLANK();
-//    placeholderBLANK.register();
-
     @Override
     public void onDisable() {
         cmdManager.clearCommands();
-        advPlaceholder.unregister();
-        fishPlaceholder.unregister();
-        mobPlaceholder.unregister();
-        purgePlaceholder.unregister();
+        if (placeholders.isRegistered()) {
+            placeholders.unregister();
+        }
         this.pointLogger.writeEntries();
 
         // set fileLoggerRunning to false, so it can be restarted
@@ -117,7 +97,7 @@ public final class CatsTracker extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cCatsTracker disabled");
     }
 
-    public ContainerManager getContainerManager() {return containerManager;}
+    public ContainerManager getContainerManager() { return containerManager; }
 
     private void executeSettings() {
         if (!getConfig().getBoolean("settingsRan")) { // if settings_run == false
@@ -137,7 +117,7 @@ public final class CatsTracker extends JavaPlugin {
 
     private void checkAndResetConfig() {
         if (!getDataFolder().exists()) {
-            if(getDataFolder().mkdirs()){  // Create plugin's folder if it doesn't exist
+            if (getDataFolder().mkdirs()) {  // Create plugin's folder if it doesn't exist
                 Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aPlugin folder created.");
             } else {
                 Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cFailed to create plugin folder.");
@@ -159,10 +139,13 @@ public final class CatsTracker extends JavaPlugin {
                 saveDefaultConfig();
                 getConfig().options().copyDefaults();
                 saveConfig();
-//                empty config found, reseting
-                Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cEmpty Config file detected. §aReset to defaults.");
-
+                Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cEmpty Config file detected. §aReset to defaults."); // Config is empty, reset it
             }
         }
+    }
+
+    public static CatsTracker getInstance() {
+        return instance;
+//        return CatsTracker.getPlugin(CatsTracker.class);
     }
 }

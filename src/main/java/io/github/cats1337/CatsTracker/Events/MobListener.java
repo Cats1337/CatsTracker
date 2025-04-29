@@ -3,7 +3,6 @@ package io.github.cats1337.CatsTracker.Events;
 import com.marcusslover.plus.lib.text.Text;
 import io.github.cats1337.CatsTracker.CatsTracker;
 import io.github.cats1337.CatsTracker.points.PointsManager;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
