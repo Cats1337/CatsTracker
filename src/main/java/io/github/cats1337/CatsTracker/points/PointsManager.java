@@ -26,15 +26,17 @@ public class PointsManager {
     }
 
     private static int getPoints(ServerPlayer serverPlayer, String category) {
-        return switch (category.toLowerCase()) {
-            case "adv" -> serverPlayer.getAdvPoints();
-            case "fish" -> serverPlayer.getFishPoints();
-            case "mob" -> serverPlayer.getMobPoints();
-            case "purge" -> serverPlayer.getPurgePoints();
-            case "break" -> serverPlayer.getBreakPoints();
-            case "place" -> serverPlayer.getPlacePoints();
-            default -> throw new IllegalArgumentException("Unknown category: " + category);
-        };
+        try {
+            if (serverPlayer == null) {
+                CatsTracker.log.warning("ServerPlayer is null");
+                return 0;
+            }
+            
+            return serverPlayer.getPoints(category.toLowerCase());
+        } catch (Exception e) {
+            CatsTracker.log.warning("Error getting points for ServerPlayer in category " + category + ": " + e.getMessage());
+            return 0;
+        }
     }
 
     public static void addPoints(Player p, int amount, String typeName, String category) {
@@ -60,6 +62,9 @@ public class PointsManager {
         int points = getPoints(serverPlayer, category);
         int newAmount = (points + amount);
         setPoints(serverPlayer, category, newAmount);
+        
+        // Save the data after modifying
+        Bukkit.getScheduler().runTaskAsynchronously(CatsTracker.getInstance(), () -> playerContainer.writeData(p.getUniqueId(), serverPlayer));
     }
 
     public static void setPoints(Player p, String category, int amount) {
@@ -71,29 +76,7 @@ public class PointsManager {
     }
 
     private static void setPoints(ServerPlayer serverPlayer, String category, int points) {
-        switch (category.toLowerCase()) {
-            case "adv":
-                serverPlayer.setAdvPoints(points);
-                break;
-            case "fish":
-                serverPlayer.setFishPoints(points);
-                break;
-            case "mob":
-                serverPlayer.setMobPoints(points);
-                break;
-            case "purge":
-                serverPlayer.setPurgePoints(points);
-                break;
-            case "break":
-                serverPlayer.setBreakPoints(points);
-                break;
-            case "place":
-                serverPlayer.setPlacePoints(points);
-                break;
-            default:
-                serverPlayer.setAdvPoints(points);
-                break;
-        }
+        serverPlayer.setPoints(category.toLowerCase(), points);
     }
 
     public static List<Map.Entry<String, Integer>> getAllSortedScores(String category) {

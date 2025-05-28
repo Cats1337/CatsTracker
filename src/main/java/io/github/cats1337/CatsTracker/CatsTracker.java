@@ -93,7 +93,7 @@ public final class CatsTracker extends JavaPlugin {
         }
     }
 
-    public boolean initializeCoreProtect(PluginManager pm) {
+    public void initializeCoreProtect(PluginManager pm) {
         if (pm.isPluginEnabled("CoreProtect")) {
             Plugin coreProtect = pm.getPlugin("CoreProtect");
             if (coreProtect instanceof CoreProtect) {
@@ -101,7 +101,6 @@ public final class CatsTracker extends JavaPlugin {
                 if (api.isEnabled() && api.APIVersion() >= 10) {
                     this.coreProtectAPI = api;
                     Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aConnected to CoreProtect API v" + api.APIVersion());
-                    return true;
                 } else {
                     Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cCoreProtect API not available or version too old");
                 }
@@ -109,7 +108,6 @@ public final class CatsTracker extends JavaPlugin {
         } else {
             Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cCoreProtect not found, block tracking will be limited");
         }
-        return false;
     }
 
 

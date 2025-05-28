@@ -69,7 +69,7 @@ public class PointsCommand implements ICommand {
                 PointsManager.setPoints(p, category, 0);
             }
 
-            Text.of("&eChanged &a" + p.getName() + "&e's &b" + getCategory(category) + "&e points from &a" + oldAmount + "&e 🠚 " + " &7[" + amtType + "]").send(sender);
+            Text.of("&eChanged &a" + p.getName() + "&e's &b" + getCategory(category) + "&e points from &a" + oldAmount + "&e 🠚 " + amount + " &7[" + amtType + "&7]").send(sender);
 
             sendPointsUpdate(p, amount, action, category);
         }
