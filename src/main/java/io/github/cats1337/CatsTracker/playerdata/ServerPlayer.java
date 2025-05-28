@@ -130,7 +130,7 @@ public class ServerPlayer {
         // Store in the map
         points.put(category.toLowerCase(), value);
         
-        // For backward compatibility, also update the old fields
+        // For backward compatibility, also update the old fieldss
         switch (category.toLowerCase()) {
             case "adv" -> advPoints = value;
             case "fish" -> fishPoints = value;
