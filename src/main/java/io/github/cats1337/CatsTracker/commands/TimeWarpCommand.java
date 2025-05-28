@@ -104,6 +104,7 @@ public class TimeWarpCommand implements ICommand {
 
     private void startTimeWarp() {
         stopTimeWarp();
+        if (!CatsTracker.getInstance().getConfig().getBoolean("enableTimeWarp")) return; // false = disabled + return, true = enabled + continue
 
         for (World world : Bukkit.getWorlds()) {
             if (world.getEnvironment() != World.Environment.NORMAL) continue;

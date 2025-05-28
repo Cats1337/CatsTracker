@@ -31,6 +31,8 @@ public class PointsManager {
             case "fish" -> serverPlayer.getFishPoints();
             case "mob" -> serverPlayer.getMobPoints();
             case "purge" -> serverPlayer.getPurgePoints();
+            case "break" -> serverPlayer.getBreakPoints();
+            case "place" -> serverPlayer.getPlacePoints();
             default -> throw new IllegalArgumentException("Unknown category: " + category);
         };
     }
@@ -81,6 +83,12 @@ public class PointsManager {
                 break;
             case "purge":
                 serverPlayer.setPurgePoints(points);
+                break;
+            case "break":
+                serverPlayer.setBreakPoints(points);
+                break;
+            case "place":
+                serverPlayer.setPlacePoints(points);
                 break;
             default:
                 serverPlayer.setAdvPoints(points);

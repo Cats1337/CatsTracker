@@ -6,17 +6,20 @@ import com.marcusslover.plus.lib.command.CommandContext;
 import com.marcusslover.plus.lib.command.ICommand;
 import com.marcusslover.plus.lib.command.TabCompleteContext;
 import com.marcusslover.plus.lib.text.Text;
+import io.github.cats1337.CatsTracker.playerdata.PlayerContainer;
+import io.github.cats1337.CatsTracker.playerdata.PlayerHandler;
+import io.github.cats1337.CatsTracker.playerdata.ServerPlayer;
 import io.github.cats1337.CatsTracker.utils.ITabCompleterHelper;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Command(name = "ctracker", aliases = {"ctrack", "ctr", "ct"})
+@Command(name = "ctracker", aliases = {"ctrack", "ct"})
 public class UtilCommands implements ICommand {
-    private final String cmdName = "ctracker";
-    private final List<String> subCommands = List.of("help", "log", "toggle", "reload");
+    private final List<String> subCommands = List.of("help", "log", "toggle", "reload", "notify");
     private final List<String> categories;
 
     public UtilCommands() {
@@ -28,13 +31,14 @@ public class UtilCommands implements ICommand {
         CommandSender sender = cmd.sender();
         String[] args = cmd.args();
 
-        if (!sender.hasPermission("ctracker.admin")) {
-            Text.of("&cYou do not have permission to use this command").send(sender);
+        if (!sender.hasPermission("ctracker.admin") && !(args.length > 0 && args[0].equalsIgnoreCase("notify"))) {
+            Text.of("&cYou don't have permission to use this command.").send(sender);
             return true;
         }
 
+        String cmdName = "ctracker";
         if (args.length == 0) {
-            Text.of("&cInvalid usage! Use /" + cmdName + " help for more info.").send(sender);
+            Text.of("&cUsage: /" + cmdName + " <" + String.join("/", subCommands) + ">").send(sender);
             return true;
         }
 
@@ -78,16 +82,17 @@ public class UtilCommands implements ICommand {
                     return true;
                 }
 
+                String type = "trackPoints";
                 if (args.length == 2) {
-                    boolean newState = toggleState(category);
+                    boolean newState = toggleState(type, category);
                     Text.of("&ePoint tracking for &b" + category + (newState ? " &aenabled" : " &cdisabled")).send(sender);
                 } else {
                     String value = args[2].toLowerCase();
                     if (value.equals("on")) {
-                        toggleState(true, category);
+                        toggleState(type, true, category);
                         Text.of("&aPoint tracking enabled for &b" + category).send(sender);
                     } else if (value.equals("off")) {
-                        toggleState(false, category);
+                        toggleState(type, false, category);
                         Text.of("&cPoint tracking disabled for &b" + category).send(sender);
                     } else {
                         Text.of("&cInvalid value. Use 'on' or 'off'.").send(sender);
@@ -95,19 +100,48 @@ public class UtilCommands implements ICommand {
                 }
             }
 
-            case "notify" ->{
-                if (args.length != 2) {
-                    Text.of("&cUsage: /" + cmdName + " notify <true/false>").send(sender);
+            case "notify" -> {
+                if (!(sender instanceof Player player)) {
+                    Text.of("&cThis command can only be used by players.").send(sender);
                     return true;
                 }
-                if (args[1].equalsIgnoreCase("true") || args[1].equalsIgnoreCase("false")) {
-                    boolean notify = Boolean.parseBoolean(args[1]);
-                    CatsTracker.getInstance().getConfig().set("notify", notify);
-                    CatsTracker.getInstance().saveConfig();
-                    Text.of(notify ? "&aNotify enabled" : "&cNotify disabled").send(sender);
-                } else {
-                    Text.of("&cInvalid value. Use true or false.").send(sender);
+
+                if (args.length < 2) {
+                    Text.of("&cUsage: /" + cmdName + " notify <category> [on/off]").send(sender);
+                    return true;
                 }
+
+                String category = args[1].toLowerCase();
+                if (!categories.contains(category)) {
+                    Text.of("&cUnknown category: " + category).send(sender);
+                    return true;
+                }
+
+                PlayerContainer playerContainer = PlayerHandler.getInstance().getContainer();
+                ServerPlayer serverPlayer = playerContainer.loadData(player.getUniqueId());
+
+//                if (args.length == 2) {
+//                    // Toggle notification
+//                    boolean newState = serverPlayer.toggleNotify(category);
+//                    Text.of("&eNotifications for &b" + category + (newState ? " &aenabled" : " &cdisabled")).send(sender);
+//                } else {
+//                    // Set notification state
+//                    String value = args[2].toLowerCase();
+//                    if (value.equals("on")) {
+//                        serverPlayer.setNotifyEnabled(category, true);
+//                        Text.of("&aNotifications enabled for &b" + category).send(sender);
+//                    } else if (value.equals("off")) {
+//                        serverPlayer.setNotifyEnabled(category, false);
+//                        Text.of("&cNotifications disabled for &b" + category).send(sender);
+//                    } else {
+//                        Text.of("&cInvalid value. Use 'on' or 'off'.").send(sender);
+//                        return true;
+//                    }
+//                }
+
+                // Save player data
+                playerContainer.writeData(player.getUniqueId(), serverPlayer);
+                return true;
             }
 
             default -> {
@@ -117,22 +151,29 @@ public class UtilCommands implements ICommand {
         return true;
     }
 
-    private boolean toggleState(String category) {
-        boolean current = CatsTracker.getInstance().getConfig().getBoolean("trackPoints." + category);
-        CatsTracker.getInstance().getConfig().set("trackPoints." + category, !current);
+    private boolean toggleState(String type,String category) {
+        boolean current = CatsTracker.getInstance().getConfig().getBoolean(type +"." + category);
+        CatsTracker.getInstance().getConfig().set(type +"." + category, !current);
         CatsTracker.getInstance().saveConfig();
         return !current;
     }
 
-    private void toggleState(boolean state, String category) {
-        CatsTracker.getInstance().getConfig().set("trackPoints." + category, state);
+    private void toggleState(String type, boolean state, String category) {
+        CatsTracker.getInstance().getConfig().set(type + "." + category, state);
         CatsTracker.getInstance().saveConfig();
     }
 
-    @Override
+@Override
     public @NotNull List<@NotNull String> tab(@NotNull TabCompleteContext tab) {
         CommandSender sender = tab.sender();
         @NotNull String[] args = tab.args();
+
+        if (args[0].equalsIgnoreCase("notify")) {
+            if (args.length == 2)
+                return ITabCompleterHelper.tabComplete(args[1], categories);
+            if (args.length == 3)
+                return ITabCompleterHelper.tabComplete(args[2], List.of("on", "off"));
+        }
 
         if (!sender.hasPermission("ctracker.admin")) return new ArrayList<>();
 

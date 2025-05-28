@@ -5,7 +5,6 @@ import io.github.cats1337.CatsTracker.CatsTracker;
 import com.marcusslover.plus.lib.text.Text;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.bukkit.Bukkit;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -50,7 +49,7 @@ public class AdvancementListener implements Listener {
 
                 Text.of("You made the advancement &5[").append(name).append(amountText).send(p);
 
-                PointsManager.getInstance().addPoints(p, amount, achName, "adv");
+                PointsManager.addPoints(p, amount, achName, "adv");
             }
 
             case GOAL -> {
@@ -66,7 +65,7 @@ public class AdvancementListener implements Listener {
 
                 Text.of("You made the advancement &#75E1FF[").append(name).append(amountText).send(p);
 
-                PointsManager.getInstance().addPoints(p, amount, achName, "adv");
+                PointsManager.addPoints(p, amount, achName, "adv");
             }
 
             case TASK -> {
@@ -82,7 +81,7 @@ public class AdvancementListener implements Listener {
 
                 Text.of("You made the advancement &a[").append(name).append(amountText).send(p);
 
-                PointsManager.getInstance().addPoints(p, amount, achName, "adv");
+                PointsManager.addPoints(p, amount, achName, "adv");
             }
         }
     }

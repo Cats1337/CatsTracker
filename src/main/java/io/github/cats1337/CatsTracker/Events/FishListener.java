@@ -3,7 +3,6 @@ package io.github.cats1337.CatsTracker.Events;
 import com.marcusslover.plus.lib.text.Text;
 import io.github.cats1337.CatsTracker.CatsTracker;
 import io.github.cats1337.CatsTracker.points.PointsManager;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
@@ -45,6 +44,7 @@ public class FishListener implements Listener {
     @EventHandler
     public void onFish(PlayerFishEvent e) {
         boolean trackPoints = CatsTracker.getInstance().getConfig().getBoolean("trackPoints.fish");
+
         if (!trackPoints) return;
 
         if (e.getState() != PlayerFishEvent.State.CAUGHT_FISH) return;
@@ -58,7 +58,7 @@ public class FishListener implements Listener {
 
         if (points > 0) {
             Player p = e.getPlayer();
-            PointsManager.getInstance().addPoints(p, points, type.name(), "fish");
+            PointsManager.addPoints(p, points, type.name(), "fish");
             Text.of("You caught something! &7[&a+" + points + "&7]").send(p);
         }
     }

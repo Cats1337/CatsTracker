@@ -43,7 +43,7 @@ public class MobListener implements Listener {
             assert name != null;
             name = name.substring(0, 1).toUpperCase() + name.substring(1).toLowerCase();
 //            name = name.replaceAll("&[0-9a-fk-or]", "").replaceAll("[\\[\\]]", "");
-            PointsManager.getInstance().addPoints(p, points, name, "mob");
+            PointsManager.addPoints(p, points, name, "mob");
             Text.of("You killed something! &7[&a+" + points + "&7]").send(p);
         }
     }

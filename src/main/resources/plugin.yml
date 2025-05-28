@@ -5,5 +5,5 @@ api-version: '1.21'
 authors:
   - Cats1337
 description: CatsTracker tracks points for stuff
-depend: [PlaceholderAPI] #required for placeholders in holograms
-softdepend: [DecentHolograms] #optional, but recommended to display points holograms
+depend: [PlaceholderAPI] #required for placeholders and such
+softdepend: [DecentHolograms, CoreProtect] # DecentHolograms: optional for holograms | CoreProtect: required for block tracking

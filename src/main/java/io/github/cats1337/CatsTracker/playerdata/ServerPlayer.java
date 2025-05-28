@@ -21,6 +21,9 @@ public class ServerPlayer {
     private int fishPoints;
     private int mobPoints;
     private int purgePoints;
+    private int breakPoints;
+    private int placePoints;
+
 
     public @Nullable Player getPlayer() {
         return Bukkit.getPlayer(uuid);

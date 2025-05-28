@@ -1,9 +1,6 @@
 package io.github.cats1337.CatsTracker;
 
-import io.github.cats1337.CatsTracker.Events.AdvancementListener;
-import io.github.cats1337.CatsTracker.Events.FishListener;
-import io.github.cats1337.CatsTracker.Events.MobListener;
-import io.github.cats1337.CatsTracker.Events.PlayerListener;
+import io.github.cats1337.CatsTracker.Events.*;
 import io.github.cats1337.CatsTracker.commands.PointsCommand;
 import io.github.cats1337.CatsTracker.commands.SizeCommand;
 import io.github.cats1337.CatsTracker.commands.TimeWarpCommand;
@@ -13,7 +10,10 @@ import io.github.cats1337.CatsTracker.utils.*;
 import io.github.cats1337.CatsTracker.playerdata.PlayerHandler;
 import com.marcusslover.plus.lib.command.CommandManager;
 import com.marcusslover.plus.lib.container.ContainerManager;
+import net.coreprotect.CoreProtect;
+import net.coreprotect.CoreProtectAPI;
 import org.bukkit.Bukkit;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -25,6 +25,7 @@ public final class CatsTracker extends JavaPlugin {
     private CommandManager cmdManager;
     private ContainerManager containerManager;
     private Placeholders placeholders;
+    private CoreProtectAPI coreProtectAPI;
     private PointLogger pointLogger;
     private static CatsTracker instance;
 
@@ -62,10 +63,21 @@ public final class CatsTracker extends JavaPlugin {
         pm.registerEvents(new FishListener(), this);
         pm.registerEvents(new MobListener(), this);
         pm.registerEvents(new PlayerListener(), this);
+        pm.registerEvents(new BlockListener(), this); // Register the BlockListener
         Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aEvents registered");
 
         // Initialize and register placeholders
         placeholders = new Placeholders();
+        registerPlaceholders(pm);
+        initializeCoreProtect(pm);
+
+        Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aCatsTracker enabled");
+    }
+
+    public void registerPlaceholders(PluginManager pm) {
+        if (placeholders == null || !placeholders.isRegistered()) {
+            placeholders = new Placeholders();
+        }
         if (pm.isPluginEnabled("PlaceholderAPI")) {
             if (placeholders.register()) {
                 Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aRegistering Placeholders:");
@@ -79,10 +91,27 @@ public final class CatsTracker extends JavaPlugin {
         } else {
             Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cPlaceholderAPI not found, placeholders will not work");
         }
-
-
-        Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aCatsTracker enabled");
     }
+
+    public boolean initializeCoreProtect(PluginManager pm) {
+        if (pm.isPluginEnabled("CoreProtect")) {
+            Plugin coreProtect = pm.getPlugin("CoreProtect");
+            if (coreProtect instanceof CoreProtect) {
+                CoreProtectAPI api = ((CoreProtect) coreProtect).getAPI();
+                if (api.isEnabled() && api.APIVersion() >= 10) {
+                    this.coreProtectAPI = api;
+                    Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aConnected to CoreProtect API v" + api.APIVersion());
+                    return true;
+                } else {
+                    Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cCoreProtect API not available or version too old");
+                }
+            }
+        } else {
+            Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cCoreProtect not found, block tracking will be limited");
+        }
+        return false;
+    }
+
 
     @Override
     public void onDisable() {
@@ -112,6 +141,19 @@ public final class CatsTracker extends JavaPlugin {
 
     public void reload() {
         reloadConfig();
+        
+        // Re-register placeholders if needed
+        PluginManager pm = Bukkit.getPluginManager();
+        if (placeholders == null || !placeholders.isRegistered()) {
+            placeholders = new Placeholders();
+            registerPlaceholders(pm);
+        }
+        
+        // Initialize CoreProtect if needed
+        if (coreProtectAPI == null || !coreProtectAPI.isEnabled()) {
+            initializeCoreProtect(pm);
+        }
+        
         Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §aCatsTracker reloaded");
     }
 
@@ -144,8 +186,8 @@ public final class CatsTracker extends JavaPlugin {
         }
     }
 
-    public static CatsTracker getInstance() {
-        return instance;
-//        return CatsTracker.getPlugin(CatsTracker.class);
-    }
+
+    public CoreProtectAPI getCoreProtectAPI() { return coreProtectAPI; }
+
+    public static CatsTracker getInstance() { return instance; }
 }

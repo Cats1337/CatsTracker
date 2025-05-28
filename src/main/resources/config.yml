@@ -10,9 +10,11 @@ excludedTabs:
 # Point tracking toggle
 trackPoints:
   adv: true
-  fish: true
-  mob: true
+  fish: false
+  mob: false
   purge: false
+  break: false
+  place: false
 
 # Placeholders
 placeholders:
@@ -20,16 +22,24 @@ placeholders:
   - "fish"
   - "mob"
   - "purge"
+  - "break"
+  - "place"
 
 # Points to award
 challenge: 45
 goal: 25
 task: 10
 
-purgeCooldown: 30 # in minutes
-respawnCooldown: 15 # in minutes
+# Cooldowns in minutes
+purgeCooldown: 30
+respawnCooldown: 15
 notify: true
 
-daySpeed: 1.0 # Speed of the day (1.0 is normal speed)
+# Speed of 1.0 is normal speed
+daySpeed: 1.0
 nightSpeed: 1.0
-disableTimeWarp: true
+enableTimeWarp: false
+
+# Add blocks to ignore here, e.g. "STONE"
+ignoredBlocks:
+  - "air"
