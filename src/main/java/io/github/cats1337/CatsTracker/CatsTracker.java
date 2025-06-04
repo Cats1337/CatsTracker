@@ -10,6 +10,7 @@ import io.github.cats1337.CatsTracker.utils.*;
 import io.github.cats1337.CatsTracker.playerdata.PlayerHandler;
 import com.marcusslover.plus.lib.command.CommandManager;
 import com.marcusslover.plus.lib.container.ContainerManager;
+import lombok.Getter;
 import net.coreprotect.CoreProtect;
 import net.coreprotect.CoreProtectAPI;
 import org.bukkit.Bukkit;
@@ -23,10 +24,13 @@ import java.util.logging.Logger;
 public final class CatsTracker extends JavaPlugin {
     public static Logger log;
     private CommandManager cmdManager;
+    @Getter
     private ContainerManager containerManager;
     private Placeholders placeholders;
+    @Getter
     private CoreProtectAPI coreProtectAPI;
     private PointLogger pointLogger;
+    @Getter
     private static CatsTracker instance;
 
     @Override
@@ -124,8 +128,6 @@ public final class CatsTracker extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage("[§bCatsTracker§r] §cCatsTracker disabled");
     }
 
-    public ContainerManager getContainerManager() { return containerManager; }
-
     private void executeSettings() {
         if (!getConfig().getBoolean("settingsRan")) { // if settings_run == false
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule announceAdvancements false");
@@ -185,7 +187,4 @@ public final class CatsTracker extends JavaPlugin {
     }
 
 
-    public CoreProtectAPI getCoreProtectAPI() { return coreProtectAPI; }
-
-    public static CatsTracker getInstance() { return instance; }
 }

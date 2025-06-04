@@ -20,8 +20,6 @@ import java.util.Map;
 
 @Command(name = "points", aliases = {"point"}, description = "Tracked points for things.")
 public class PointsCommand implements ICommand {
-    private final String cmdName = "points";
-    private final List<String> subCommands = List.of("set", "reset", "add", "remove", "lb");
     private final PointLogger pointLogger;
     private final List<String> categories;
     private final List<String> subCmdsAndCategories = new ArrayList<>();
@@ -30,18 +28,19 @@ public class PointsCommand implements ICommand {
     public PointsCommand() {
         this.pointLogger = PointLogger.getInstance();
         this.categories = CatsTracker.getInstance().getConfig().getStringList("placeholders");
+        List<String> subCommands = List.of("set", "reset", "add", "remove", "lb");
         this.subCmdsAndCategories.addAll(subCommands);
         this.subCmdsAndCategories.addAll(categories);
     }
 
     private String getCategory(String arg) {
-        switch (arg.toLowerCase()) {
+        switch (arg.toLowerCase()) { // Future proofing for when we add more categories that are abbreviated
             case "adv": return "Advancement";
             default: return arg.substring(0, 1).toUpperCase() + arg.substring(1).toLowerCase();
         }
     }
 
-    private void sendPointsUpdate(Player p, int amount, String action, String category) {
+    private void sendPointsUpdate(Player p, String action, String category) {
         Text.of("&eYour &b" + getCategory(category) + "&e points have been updated to &a" + PointsManager.getPoints(p, category) + "&e. &7[" + action + "]").send(p);
 
     }
@@ -71,7 +70,7 @@ public class PointsCommand implements ICommand {
 
             Text.of("&eChanged &a" + p.getName() + "&e's &b" + getCategory(category) + "&e points from &a" + oldAmount + "&e 🠚 " + amount + " &7[" + amtType + "&7]").send(sender);
 
-            sendPointsUpdate(p, amount, action, category);
+            sendPointsUpdate(p, action, category);
         }
     }
 
@@ -191,7 +190,7 @@ public class PointsCommand implements ICommand {
                     }
 
                     default -> {
-                        Text.of("&cUnknown subcommand. Try /" + cmdName + " help for a list of commands.").send(sender);
+                        Text.of("&cUnknown subcommand. Try /points help for a list of commands.").send(sender);
                         return true;
                     }
                 }

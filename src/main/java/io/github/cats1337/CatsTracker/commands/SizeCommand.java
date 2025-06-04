@@ -18,7 +18,7 @@ public class SizeCommand implements ICommand {
     @Override
     public boolean execute(CommandContext cmd) {
         CommandSender sender = cmd.sender();
-        if (!(sender instanceof Player p) && cmd.args().length < 2) {
+        if (!(sender instanceof Player) && cmd.args().length < 2) {
             Text.of("This command can only be executed by a player").send(sender);
             return true;
         }
@@ -41,7 +41,7 @@ public class SizeCommand implements ICommand {
         Player target;
         // If specifying a player, check if they are online
         if (args.length == 2) {
-            if (!isAdmin(sender)) return true;
+            if (isNotAdmin(sender)) return true;
 
             target = Bukkit.getPlayer(args[1]);
             if (target == null) {
@@ -91,7 +91,7 @@ public class SizeCommand implements ICommand {
             }
             default -> {
                 try {
-                    if (!isAdmin(sender)) return true;
+                    if (isNotAdmin(sender)) return true;
 
                     double scale = Double.parseDouble(sizeArg);
                     scale = Math.min(Math.max(scale, 0.01), 100);
@@ -114,12 +114,12 @@ public class SizeCommand implements ICommand {
 
     // if they have the admin permission, continue, otherwise send a message
     // and return true
-    public static boolean isAdmin(CommandSender sender) {
+    public static boolean isNotAdmin(CommandSender sender) {
         if (sender.hasPermission("makeme.admin")) {
-            return true;
+            return false;
         } else {
             Text.of("&cYou do not have permission to use this command.").send(sender);
-            return false;
+            return true;
         }
     }
 

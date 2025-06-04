@@ -21,7 +21,6 @@ import java.util.Map;
 public class TimeWarpCommand implements ICommand {
     private static final Map<World, Integer> taskIDs = new HashMap<>();
     private static final Map<World, Double> accumulators = new HashMap<>();
-    private static int taskId;
     private static double daySpeed = CatsTracker.getInstance().getConfig().getDouble("timewarp.daySpeed", 0.0);
     private static double nightSpeed = CatsTracker.getInstance().getConfig().getDouble("timewarp.nightSpeed", 0.0);
 
@@ -57,9 +56,7 @@ public class TimeWarpCommand implements ICommand {
                         Text.of("&aTime warp active (Day: " + daySpeed + " | Night: " + nightSpeed + ") in: " + worlds).send(sender);
                     }
                 }
-                default -> {
-                    Text.of("&cUnknown subcommand. Use: start, stop, set, or status.").send(sender);
-                }
+                default -> Text.of("&cUnknown subcommand. Use: start, stop, set, or status.").send(sender);
             }
 
             return true;
@@ -109,7 +106,8 @@ public class TimeWarpCommand implements ICommand {
         for (World world : Bukkit.getWorlds()) {
             if (world.getEnvironment() != World.Environment.NORMAL) continue;
 
-            taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(CatsTracker.getInstance(), () -> {
+            // Scale warpLevel: higher = faster day, slower night (or flip depending on intent)
+            int taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(CatsTracker.getInstance(), () -> {
                 long time = world.getTime();
                 boolean isDay = time >= 0 && time < 12300;
 

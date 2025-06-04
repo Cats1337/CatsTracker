@@ -1,9 +1,12 @@
 package io.github.cats1337.CatsTracker.Events;
 
+import com.marcusslover.plus.lib.text.Text;
 import io.github.cats1337.CatsTracker.CatsTracker;
 import io.github.cats1337.CatsTracker.points.PointsManager;
 import net.coreprotect.CoreProtect;
 import net.coreprotect.CoreProtectAPI;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -13,13 +16,22 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.plugin.Plugin;
 
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class BlockListener implements Listener {
-    public BlockListener() { addIgnoreBlock(); }
-    
+    public BlockListener() {
+        addIgnoreBlock();
+        startPointsAlertTask();
+    }
+
+    // Cache for block lookups to avoid excessive API calls
+    private final Map<Location, Boolean> lookupCache = new HashMap<>();
+    private final Map<Location, Long> cacheTimestamps = new HashMap<>();
+
+    // Recent point timestamps for players
+    private final Map<UUID, Map<String, List<Long>>> recentPointTimestamps = new HashMap<>();
+
+
     // Set of flora/crops/leaves to ignore for breaking
     private static final Set<Material> IGNORED_BREAK_TYPES = EnumSet.of(
             Material.SHORT_GRASS, Material.TALL_GRASS, Material.FERN, Material.LARGE_FERN,
@@ -88,52 +100,117 @@ public class BlockListener implements Listener {
     }
 
     @EventHandler
-    public void onBlockPlace(BlockPlaceEvent event) {
+    public void onBlockPlace(BlockPlaceEvent e) {
         boolean trackPoints = CatsTracker.getInstance().getConfig().getBoolean("trackPoints.place");
         if (!trackPoints) return;
-        Player player = event.getPlayer();
-        
-        // Award 1 point for block placement (category: "block")
-        PointsManager.addPoints(player, 1, "block_place", "block");
+        Player p = e.getPlayer();
+        Block block = e.getBlock();
+
+        if (IGNORED_BREAK_TYPES.contains(block.getType())) return;
+
+        PointsManager.addPoints(p, 1, "block_place", "place");
+        recordReward(p, "placing");
     }
 
-    @EventHandler
-    public void onBlockBreak(BlockBreakEvent event) {
-        boolean trackPoints = CatsTracker.getInstance().getConfig().getBoolean("trackPoints.break");
-        if (!trackPoints) return;
-        Player player = event.getPlayer();
-        Block block = event.getBlock();
+    // Utility to check if block was placed by player (with caching)
+    private boolean isUnnaturalBlock(CoreProtectAPI api, Block block) {
+        Location loc = block.getLocation();
 
-        // Ignore flora, crops, and leaves
-        if (IGNORED_BREAK_TYPES.contains(block.getType())) {
-            return;
+        // Cached
+        if (lookupCache.containsKey(loc)) {
+            long last = cacheTimestamps.getOrDefault(loc, 0L);
+            // 1 min
+            long cacheExpiryMillis = 60_000;
+            if (System.currentTimeMillis() - last < cacheExpiryMillis) {
+                return lookupCache.get(loc);
+            }
         }
-        
-        // Check if the block was placed by a player using CoreProtect
-        CoreProtectAPI coreProtect = getCoreProtect();
-        if (coreProtect != null) {
-            // Look up data from the last 3 days
-            List<String[]> blockData = coreProtect.blockLookup(block, 259200);
-            
-            if (blockData != null) {
-                for (String[] data : blockData) {
-                    // Check if this block was placed (action #1 is placement)
-                    if (data[4].equals("1")) {
-                        // Block was placed by a player, don't award points
-                        return;
-                    }
+
+        boolean isUnnatural = false;
+        List<String[]> lookup = api.blockLookup(block, 259200); // 3 days
+
+        if (lookup == null || lookup.isEmpty()) {
+            isUnnatural = true;
+        }
+
+
+        if (lookup != null) {
+            for (String[] entry : lookup) {
+                if (entry.length >= 6 && entry[5].equals("1")) {
+                    isUnnatural = true;
+                    break;
                 }
             }
         }
 
-        // if block is an ore, add 2 points instead of 1
-        if (block.getType().name().contains("ORE")) {
-            PointsManager.addPoints(player, 2, "block_break", "block");
-            return;
-        }
+        lookupCache.put(loc, isUnnatural);
+        cacheTimestamps.put(loc, System.currentTimeMillis());
+        return isUnnatural;
+    }
 
-        // Award 1 point for breaking valid block (category: "block")
-        PointsManager.addPoints(player, 1, "block_break", "block");
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent e) {
+        boolean trackPoints = CatsTracker.getInstance().getConfig().getBoolean("trackPoints.break");
+        if (!trackPoints) return;
+
+        Player p = e.getPlayer();
+        Block block = e.getBlock();
+
+        if (IGNORED_BREAK_TYPES.contains(block.getType())) return;
+
+        CoreProtectAPI api = getCoreProtect();
+        if (api == null) return;
+
+        Bukkit.getScheduler().runTaskAsynchronously(CatsTracker.getInstance(), () -> {
+            if (!isUnnaturalBlock(api, block)) return;
+
+            int points = 1;
+
+            Bukkit.getScheduler().runTask(CatsTracker.getInstance(), () -> {
+                PointsManager.addPoints(p, points, "block_break", "break");
+                recordReward(p, "breaking");
+            });
+        });
+    }
+
+
+    public void recordReward(Player p, String category) {
+        UUID uuid = p.getUniqueId();
+        recentPointTimestamps
+                .computeIfAbsent(uuid, k -> new HashMap<>())
+                .computeIfAbsent(category, k -> new ArrayList<>())
+                .add(System.currentTimeMillis());
+    }
+
+    public void onPointsAlert(Player p) {
+        long cutoff = System.currentTimeMillis() - (5 * 60 * 1000);
+        UUID uuid = p.getUniqueId();
+        Map<String, List<Long>> categoryMap = recentPointTimestamps.getOrDefault(uuid, Collections.emptyMap());
+
+        for (Map.Entry<String, List<Long>> entry : categoryMap.entrySet()) {
+            String category = entry.getKey();
+            List<Long> timestamps = entry.getValue();
+
+            long count = timestamps.stream().filter(t -> t >= cutoff).count();
+
+            if (count > 0) {
+                int points = (int) count; // Assuming 1 point per event here, adjust if needed
+
+                // Send message on main thread
+                Bukkit.getScheduler().runTask(CatsTracker.getInstance(), () -> {
+                    Text.of("&fYou've received [&a" + points + "&f] points for " + category + " blocks in the last 5 minutes.").send(p);
+                });
+            }
+        }
+    }
+
+
+    private void startPointsAlertTask() {
+        Bukkit.getScheduler().runTaskTimerAsynchronously(CatsTracker.getInstance(), () -> {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                onPointsAlert(p);
+            }
+        }, 0L, 20L * 60 * 5); // every 5 minutes async
     }
 
 }

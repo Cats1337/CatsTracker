@@ -5,18 +5,19 @@ import io.github.cats1337.CatsTracker.playerdata.PlayerHandler;
 import io.github.cats1337.CatsTracker.playerdata.ServerPlayer;
 import io.github.cats1337.CatsTracker.utils.PointLogger;
 import io.github.cats1337.CatsTracker.CatsTracker;
-import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.*;
 
-public class PointsManager {
-    @Getter
-    private static final PointsManager instance = new PointsManager();
+public final class PointsManager {
+    
+    private static final PointLogger pointLogger = PointLogger.getInstance();
 
-    private static PointLogger pointLogger = new PointLogger();
-    private PointsManager() {pointLogger = PointLogger.getInstance();}
+    // Private constructor to prevent instantiation
+    private PointsManager() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
 
     public static int getPoints(Player p, String category) {
         PlayerContainer playerContainer = PlayerHandler.getInstance().getContainer();
@@ -64,7 +65,7 @@ public class PointsManager {
         setPoints(serverPlayer, category, newAmount);
         
         // Save the data after modifying
-        Bukkit.getScheduler().runTaskAsynchronously(CatsTracker.getInstance(), () -> playerContainer.writeData(p.getUniqueId(), serverPlayer));
+        savePlayerData(p.getUniqueId(), serverPlayer);
     }
 
     public static void setPoints(Player p, String category, int amount) {
@@ -72,7 +73,7 @@ public class PointsManager {
         ServerPlayer serverPlayer = playerContainer.loadData(p.getUniqueId());
 
         setPoints(serverPlayer, category, amount);
-        Bukkit.getScheduler().runTaskAsynchronously(CatsTracker.getInstance(), () -> playerContainer.writeData(p.getUniqueId(), serverPlayer));
+        savePlayerData(p.getUniqueId(), serverPlayer);
     }
 
     private static void setPoints(ServerPlayer serverPlayer, String category, int points) {
@@ -96,4 +97,24 @@ public class PointsManager {
         return sortedScores;
     }
 
+    private static void savePlayerData(UUID uuid, ServerPlayer serverPlayer) {
+        CatsTracker plugin = CatsTracker.getInstance();
+        
+        // Check if plugin is enabled
+        if (plugin.isEnabled()) {
+            // Plugin is enabled, save data asynchronously
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, 
+                () -> PlayerHandler.getInstance().getContainer().writeData(uuid, serverPlayer));
+        } else {
+            try {
+                // Plugin is disabled, save data synchronously
+                PlayerHandler.getInstance().getContainer().writeData(uuid, serverPlayer);
+                
+                // Log that we're handling a disabled plugin situation
+                Bukkit.getLogger().warning("[CatsTracker] Plugin was disabled during data save operation. Data saved synchronously.");
+            } catch (Exception e) {
+                Bukkit.getLogger().severe("[CatsTracker] Error saving player data while plugin is disabled: " + e.getMessage());
+            }
+        }
+    }
 }

@@ -4,7 +4,6 @@ import com.marcusslover.plus.lib.text.Text;
 import io.github.cats1337.CatsTracker.CatsTracker;
 import io.github.cats1337.CatsTracker.commands.SizeCommand;
 import io.github.cats1337.CatsTracker.points.PointsManager;
-import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
@@ -26,7 +25,8 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent e) {
         boolean trackPoints = CatsTracker.getInstance().getConfig().getBoolean("trackPoints.purge");
-        if (!(e.getEntity() instanceof Player) || !trackPoints) return;
+        e.getEntity();
+        if (!trackPoints) return;
 
         Player victim = e.getEntity();
         Player killer = victim.getKiller();
@@ -141,7 +141,7 @@ public class PlayerListener implements Listener {
 
     final long MESSAGE_COOLDOWN = 10000; // 10 seconds in milliseconds
     final HashMap<UUID, Long> lastMessageTime = new HashMap<>();
-    public static boolean EnabledStatus = CatsTracker.getInstance().getConfig().getBoolean("notify");
+    public static final boolean EnabledStatus = CatsTracker.getInstance().getConfig().getBoolean("notify");
 
     @EventHandler
     public void EntityPotionEffectEvent(EntityPotionEffectEvent e) {

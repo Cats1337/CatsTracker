@@ -6,10 +6,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -19,11 +16,6 @@ public class PlayerHandler implements Listener {
 
     public PlayerHandler() {
         instance = this;
-    }
-
-    public @NotNull Collection<ServerPlayer> getGamePlayers() {
-        PlayerContainer container = getContainer();
-        return container != null ? container.getValues() : List.of();
     }
 
     public PlayerContainer getContainer() {

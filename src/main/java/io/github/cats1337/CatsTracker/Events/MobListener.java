@@ -58,7 +58,7 @@ public class MobListener implements Listener {
     }
 
     private int getPoints(EntityType type) {
-        int points = switch(type) {
+        return switch(type) {
             case SPIDER, CAVE_SPIDER, ZOMBIE, SKELETON, MAGMA_CUBE, PILLAGER, VEX -> 1;
             case ENDERMAN, ENDERMITE, EVOKER, VINDICATOR -> 2;
             case CREEPER, DROWNED, HUSK, BOGGED, STRAY, BLAZE, WITCH, BREEZE,
@@ -67,7 +67,6 @@ public class MobListener implements Listener {
                     WITHER, ENDER_DRAGON, ELDER_GUARDIAN -> 5;
             default -> 0;
         };
-        return points;
     }
 
 }

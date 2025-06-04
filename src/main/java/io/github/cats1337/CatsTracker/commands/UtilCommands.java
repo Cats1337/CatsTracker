@@ -144,9 +144,7 @@ public class UtilCommands implements ICommand {
                 return true;
             }
 
-            default -> {
-                Text.of("&cUnknown subcommand: " + arg).send(sender);
-            }
+            default -> Text.of("&cUnknown subcommand: " + arg).send(sender);
         }
         return true;
     }

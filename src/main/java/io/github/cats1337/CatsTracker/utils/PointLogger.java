@@ -30,7 +30,13 @@ public class PointLogger {
 
     public void fileLogger() {
         File logFolder = new File(this.logFolderPath);
-        logFolder.mkdirs();
+        if (!logFolder.exists()) {
+            if (logFolder.mkdir()) {
+                CatsTracker.log.info("Log folder created");
+            } else {
+                CatsTracker.log.severe("Failed to create log folder");
+            }
+        }
 
         this.deleteExpiredLogs();
 
